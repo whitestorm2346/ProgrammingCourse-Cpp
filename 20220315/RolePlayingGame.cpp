@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <cstdlib>
 #include <ctime>
 
@@ -9,14 +10,16 @@ class NPC;
 class Character
 {
 protected:
+    std::string role;
     int HP;
+    int currHP;
     int ATK;
     int hitRate; // unit: %
     int Exp;
     int Lv;
 
 public:
-    Character(int HP, int ATK, int hitRate);
+    Character(std::string role, int HP, int ATK, int hitRate);
     ~Character(){}
 
     void state();
@@ -24,16 +27,23 @@ public:
     void attack(Monster& monster);
     void attack(NPC& npc);
     void upgrade();
+    void respown();
     bool hurt(int damage);
 };
 
 class Monster: public Character
 {
+    bool angryMode;
+    bool berserkMode;
+
 public:
     Monster();
     ~Monster(){}
 
-    void respown();
+    void checkMode();
+    void attack(Player& player);
+    void attack(Monster& monster);
+    void attack(NPC& npc);
 };
 
 class Player: public Character
@@ -41,8 +51,6 @@ class Player: public Character
 public:
     Player();
     ~Player(){}
-
-    void respown();
 };
 
 class NPC: public Character
@@ -50,8 +58,6 @@ class NPC: public Character
 public:
     NPC();
     ~NPC(){}
-
-    void respown();
 };
 
 int main()
@@ -62,6 +68,15 @@ int main()
     Player* player = new Player();
     Monster* monster = new Monster();
 
+    std::cout<< "< NPC >\n";
+    npc->state();
+
+    std::cout<< "\n< Player >\n";
+    player->state();
+
+    std::cout<< "\n< monster >\n";
+    monster->state();
+
     delete npc;
     delete player;
     delete monster;
@@ -69,9 +84,11 @@ int main()
     return 0;
 }
 
-Character::Character(int HP, int ATK, int hitRate)
+Character::Character(std::string role, int HP, int ATK, int hitRate)
 {
+    this->role = role;
     this->HP = HP;
+    this->currHP = HP;
     this->ATK = ATK;
     this->hitRate = hitRate;
     this->Exp = 0;
@@ -79,7 +96,9 @@ Character::Character(int HP, int ATK, int hitRate)
 }
 void Character::state()
 {
-    std::cout<< "HP:  " << HP << '\n';
+    std::cout<< "Level: " << Lv << '\n';
+    std::cout<< "Exp: " << Exp << "/100\n";
+    std::cout<< "HP:  " << currHP << '/' << HP << '\n';
     std::cout<< "ATK: " << ATK << '\n';
 }
 void Character::attack(Player& player)
@@ -88,9 +107,9 @@ void Character::attack(Player& player)
     {
         if(player.hurt(ATK)) player.respown();
 
-        std::cout<< "player under attack......\n";
+        std::cout<< "Player is under attack......\n";
     }
-    else std::cout<< "miss......\n";
+    else std::cout<< role << " misses the attack......\n";
 }
 void Character::attack(Monster& monster)
 {
@@ -109,10 +128,11 @@ void Character::attack(Monster& monster)
                 upgrade();
             }
         }
+        else
 
-        std::cout<< "monster under attack......\n";
+        std::cout<< "Monster is under attack......\n";
     }
-    else std::cout<< "miss......\n";
+    else std::cout<< role << " misses the attack......\n";
 }
 void Character::attack(NPC& npc)
 {
@@ -120,9 +140,9 @@ void Character::attack(NPC& npc)
     {
         if(npc.hurt(ATK)) npc.respown();
 
-        std::cout<< "NPC under attack......\n";
+        std::cout<< "NPC is under attack......\n";
     }
-    else std::cout<< "miss......\n";
+    else std::cout<< role << " misses the attack......\n";
 }
 void Character::upgrade()
 {
@@ -131,48 +151,74 @@ void Character::upgrade()
 
     if(Lv % 3 == 1) ATK++;
 }
+void Character::respown()
+{
+    std::cout<< role << " respwoned......\n";
+
+    currHP = HP;
+    Exp = 0;
+}
 bool Character::hurt(int damage)
 {
     HP -= damage;
 
     if(HP <= 0)
     {
-        std::cout<< "die......\n";
+        std::cout<< role << " is dead......\n";
 
         return true;
     }
     else return false;
 }
-Player::Player(): Character(100, 1, 80)
+Player::Player(): Character("Player", 100, 1, 80)
 {
 
 }
-void Player::respown()
+Monster::Monster(): Character("Monster", 200, 10, 50)
 {
-    Lv = 1;
-    Exp = 0;
-    HP = 100;
-    ATK = 1;
+    angryMode = false;
+    berserkMode = false;
 }
-Monster::Monster(): Character(200, 10, 50)
+void Monster::checkMode()
+{
+    if((static_cast<double>(currHP) / HP) <= 0.2) berserkMode = angryMode = true;
+    else if((static_cast<double>(currHP) / HP) <= 0.5) angryMode = true, berserkMode = false;
+    else berserkMode = angryMode = false;
+}
+void Monster::attack(Player& player)
+{
+    int temp = ATK;
+
+    if(berserkMode) ATK *= 3;
+    else if(angryMode) ATK *= 2;
+
+    Character::attack(player);
+
+    ATK = temp;
+}
+void Monster::attack(Monster& monster)
+{
+    int temp = ATK;
+
+    if(berserkMode) ATK *= 3;
+    else if(angryMode) ATK *= 2;
+
+    Character::attack(monster);
+
+    ATK = temp;
+}
+void Monster::attack(NPC& npc)
+{
+    int temp = ATK;
+
+    if(berserkMode) ATK *= 3;
+    else if(angryMode) ATK *= 2;
+
+    Character::attack(npc);
+
+    ATK = temp;
+}
+NPC::NPC(): Character("NPC", 150, 5, 60)
 {
 
-}
-void Monster::respown()
-{
-    Lv = 1;
-    Exp = 0;
-    HP = 200;
-    ATK = 10;
-}
-NPC::NPC(): Character(150, 5, 60)
-{
-
-}
-void NPC::respown()
-{
-    Lv = 1;
-    Exp = 0;
-    HP = 150;
-    ATK = 60;
 }
