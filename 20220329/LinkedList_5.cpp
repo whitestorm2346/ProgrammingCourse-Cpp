@@ -28,6 +28,8 @@ public:
 
 class LinkedList
 {
+    Node* clear(Node* curr);
+
 public:
     Node* front;
 
@@ -125,7 +127,9 @@ LinkedList::LinkedList(Node* front)
 }
 LinkedList::~LinkedList()
 {
+    Node* del = clear(front);
 
+    delete del;
 }
 void LinkedList::add(Node* newNode)
 {
@@ -217,6 +221,16 @@ void LinkedList::checkZero()
         }
     }
 }
+Node* LinkedList::clear(Node* curr)
+{
+    if(curr->next == front) return curr;
+
+    Node* del = clear(curr->next);
+
+    delete del;
+
+    return curr;
+}
 char UI::pressedKey()
 {
     if(kbhit()) return static_cast<char>(getch());
@@ -229,7 +243,7 @@ void UI::action(LinkedList* list)
         case 'a': case 'A': list->add(new Node()); break;
         case '+': case '=': list->addValue(1);  break;
         case '-': case '_': list->addValue(-1); break;
-        case 'e': case 'E': endLoop = true; gotoxy(0, HEIGHT + 1); break;
+        case 'e': case 'E': endLoop = true; gotoxy(0, 0); break;
         default: break;
     }
 }
