@@ -159,7 +159,6 @@ void LinkedList::addValue(int delta)
         curr->time += delta;
 
         if(curr->time > 9) curr->time = 9;
-        else if(curr->time < 0) curr->time = 0;
 
         hideCursor();
         gotoxy(curr->pos.first, curr->pos.second);
