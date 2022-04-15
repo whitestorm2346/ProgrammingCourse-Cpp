@@ -15,8 +15,8 @@ public:
 
 Pump::Pump(): capacity(0),maxCapacity(5){ // 設定 capacity = 0, maxCapacity = 5
   //輸出 capacity, maxCapacity
-  cout<<"capacity="<<capacity<<endl;
-  cout<<"maxCapacity="<<maxCapacity<<endl;
+  cout<<"capacity: "<<capacity<<endl;
+  cout<<"maxCapacity: "<<maxCapacity<<endl;
 
   while(PumpWater());
   delete this;
@@ -24,8 +24,8 @@ Pump::Pump(): capacity(0),maxCapacity(5){ // 設定 capacity = 0, maxCapacity = 5
 
 Pump::Pump(int x): capacity(0),maxCapacity(x){ // 設定 capacity = 0, maxCapacity = x)
   //輸出 capacity, maxCapacity
-  cout<<"capacity="<<capacity<<endl;
-  cout<<"maxCapacity="<<maxCapacity<<endl;
+  cout<<"capacity: "<<capacity<<endl;
+  cout<<"maxCapacity: "<<maxCapacity<<endl;
 
   while(PumpWater());
   delete this;
@@ -33,8 +33,8 @@ Pump::Pump(int x): capacity(0),maxCapacity(x){ // 設定 capacity = 0, maxCapacity
 
 Pump::Pump(int x, int y): capacity(x),maxCapacity(y){ // 設定 capacity = x, maxCapacity = y
   //輸出 capacity, maxCapacity
-  cout<<"capacity="<<capacity<<endl;
-  cout<<"maxCapacity="<<maxCapacity<<endl;
+  cout<<"capacity: "<<capacity<<endl;
+  cout<<"maxCapacity: "<<maxCapacity<<endl;
 
   while(PumpWater());
   delete this;
