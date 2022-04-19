@@ -3,11 +3,47 @@
 #include <ctime>
 #include <windows.h>
 
-#define MAX_WIDTH 80
-#define MAX_HEIGHT 15
+// part 10-1
+#define WIDTH 80
+#define HEIGHT 15
+
+#define IDLE 0
+#define RUN_OUT_POWER 1
+#define RUN_OUT_CAPACITY 2
+
+// extra
+class Node
+{
+public:
+    int x;
+    int y;
+    Node* prev;
+    Node* next;
+
+    Node(int x, int y);
+};
+
+class LinkedList
+{
+public:
+    Node* front;
+    Node* back;
+
+    LinkedList();
+    ~LinkedList();
+
+    // part 10-2
+    void show();
+    void add(Node* newNode);
+    // part 10-2 end
+
+    bool cleanTrash(int x, int y);
+};
+// extra end
 
 class Robot
 {
+private:
     // part 1
     int x;
     int y;
@@ -33,15 +69,27 @@ public:
     // part 2.3 end
 
     // extra
-    void print(int x, int y, char chr);
+    std::pair<int, int> getCurrLocation();
+    void gotoChargingSpot(int type);
+    void charge(); // part 10-4-b
+    int getPowerValue();
     float getPower();
-    bool move();
+    bool isOnChargingSpot();
+    bool moving();
+    void move();
+    void showRobot();
+    void showChargingSpot();
+
+protected:
+    bool toChargingSpot;
+    int type;
     // extra end
 };
 
 // part 7
 class SweeperRobot: public Robot
 {
+private:
     int capacity;
     int maxCapacity;
     // part 7 end
@@ -59,12 +107,14 @@ public:
 
     // extra
     float getCapacity();
-    bool move();
+    void cleanCapacity(); // part 10-4-a
+    void move(LinkedList* trash);
     // extra end
 };
 
-void gotoxy(short x, short y);
+void print(int x, int y, char chr);
 void hideCursor();
+void gotoxy(int x, int y);
 
 int main()
 {
@@ -73,11 +123,13 @@ int main()
     Robot* robot1 = new Robot();
     robot1->SetTargetLocation(25, 20);
     delete robot1;
+    // part 3.1 end
 
     // part 3.2
     Robot* robot2 = new Robot(20, 20);
     robot2->SetTargetLocation(40, 10);
     delete robot2;
+    // part 3.2 end
 
     // part 4
     Robot* robot1 = new Robot();
@@ -107,37 +159,177 @@ int main()
     delete robot2;
 */
 
+    SweeperRobot* robot = new SweeperRobot(0, 14, 0, 14, 100); // part 10-3
+    LinkedList* trash = new LinkedList();
+    clock_t check = clock();
 
+    while(true)
+    {
+        // part 10-2
+        if((clock() - check) / CLOCKS_PER_SEC >= 1)
+        {
+            trash->add(new Node(rand() % WIDTH, rand() % HEIGHT));
+
+            check = clock();
+        }
+
+        trash->show();
+        // part 10-2 end
+
+        robot->showChargingSpot();
+        robot->showRobot();
+
+        gotoxy(0, 16);
+        robot->Status();
+
+        Sleep(50);
+    }
+
+    delete robot;
+    delete trash;
 
     return 0;
 }
 
-void gotoxy(short x, short y)
+void print(int x, int y, char chr)
 {
-    COORD pos = {x, y};
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleCursorPosition(hOut, pos);
+    hideCursor();
+    gotoxy(x, y);
+    std::cout<< chr;
 }
 void hideCursor()
 {
     CONSOLE_CURSOR_INFO cursor_info = {1, 0};
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor_info);
 }
+void gotoxy(int x, int y)
+{
+    COORD pos = {x, y};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+// extra
+Node::Node(int x, int y)
+{
+    this->x = x;
+    this->y = y;
+    prev = nullptr;
+    next = nullptr;
+}
+
+LinkedList::LinkedList()
+{
+    front = nullptr;
+    back = nullptr;
+}
+LinkedList::~LinkedList()
+{
+
+}
+
+// part 10-2
+void LinkedList::show()
+{
+    for(Node* curr = front; curr != nullptr; curr = curr->next)
+    {
+        print(curr->x, curr->y, '@');
+    }
+}
+void LinkedList::add(Node* newNode)
+{
+    if(front == nullptr)
+    {
+        front = newNode;
+        back = newNode;
+    }
+    else
+    {
+        newNode->prev = back;
+        back->next = newNode;
+        back = newNode;
+    }
+}
+// part 10-2 end
+
+bool LinkedList::cleanTrash(int x, int y)
+{
+    Node* curr = front;
+
+    if(front != nullptr)
+    {
+        if(front == back && (curr->x == x && curr->y == y))
+        {
+            delete front;
+            front = nullptr;
+            back = nullptr;
+
+            return true;
+        }
+        else
+        {
+            while(curr != nullptr)
+            {
+                if(curr->x == x && curr->y == y)
+                {
+                    if(curr == front)
+                    {
+                        front = front->next;
+                        delete front->prev;
+                        front->prev = nullptr;
+                    }
+                    else if(curr == back)
+                    {
+                        back = back->prev;
+                        delete back->next;
+                        back->next = nullptr;
+                    }
+                    else
+                    {
+                        curr->prev->next = curr->next;
+                        curr->next->prev = curr->prev;
+                        delete curr;
+                    }
+
+                    return true;
+                }
+                else curr = curr->next;
+            }
+        }
+    }
+
+    return false;
+}
+// extra end
 
 Robot::Robot() // part 2.1
 {
-    x = y = 0;
-    chargingX = chargingY = 0;
-    power = maxPower = 100;
-    targetX = targetY = 0;
+    x = 0;
+    y = 0;
+    chargingX = 0;
+    chargingY = 0;
+    power = 100;
+    maxPower = 100;
+    targetX = 0;
+    targetY = 0;
+
+    // extra
+    toChargingSpot = false;
+    type = 0;
 }
 Robot::Robot(int a, int b) // part 2.2
 {
     x = a;
     y = b;
-    chargingX = chargingY = 0;
-    power = maxPower = 100;
-    targetX = targetY = 0;
+    chargingX = 0;
+    chargingY = 0;
+    power = 100;
+    maxPower = 100;
+    targetX = a;
+    targetY = b;
+
+    // extra
+    toChargingSpot = false;
+    type = 0;
 }
 
 // part 2.3
@@ -166,29 +358,48 @@ void Robot::SetTargetLocation(int targetX, int targetY)
 }
 void Robot::Status()
 {
-    std::cout<< "Location = (" << x << "," << y << ")\n";
-    std::cout<< "Charging Location = (" << x << "," << y << ")\n";
+    std::cout<< "Location = (" << x << ", " << y << ")\n";
+    std::cout<< "Charging Location = (" << chargingX << ", " << chargingY << ")\n";
     std::cout<< "Power = ";
-    printf("%.1f%%\n", getPower());
-    std::cout<< "Target Location = (" << targetX << "," << targetY << ")\n";
-
-    print(chargingX, chargingY, 'C');
-    print(chargingX, chargingY, 'R');
+    printf("%5.1f%%\n", getPower());
+    std::cout<< "Target Location = (" << targetX << ", " << targetY << ")\n";
 }
 // part 2.3 end
 
 // extra
-void Robot::print(int x, int y, char chr)
+std::pair<int, int> Robot::getCurrLocation()
 {
-    hideCursor();
-    gotoxy(x, y);
-    std::cout<< chr;
+    return {x, y};
+}
+void Robot::gotoChargingSpot(int type)
+{
+    this->type = type;
+    toChargingSpot = true;
+    SetTargetLocation(chargingX, chargingY);
+}
+void Robot::charge() // part 10-4-b
+{
+    if(power < maxPower)
+    {
+        power += 10;
+
+        if(power > maxPower) power = maxPower;
+    }
+    else type = IDLE;
+}
+int Robot::getPowerValue()
+{
+    return power;
 }
 float Robot::getPower()
 {
     return static_cast<float>(power) / maxPower * 100;
 }
-bool Robot::move()
+bool Robot::isOnChargingSpot()
+{
+    return (x == chargingX && y == chargingY);
+}
+bool Robot::moving()
 {
     if(targetX == x && targetY == y) return false;
 
@@ -202,27 +413,38 @@ bool Robot::move()
 
     print(x, y, 'R');
 
-    // part 6
-    if(power > 0) power -= 5;
-
-    if(getPower() <= 10.f) SetTargetLocation(chargingX, chargingY);
-    // part 6 end
-
     return true;
+}
+void Robot::move()
+{
+    if(!moving()) return;
+
+    // part 6
+    if(!toChargingSpot) power -= 5;
+
+    if(getPower() < 10) gotoChargingSpot(RUN_OUT_POWER);
+    // part 6 end
+}
+void Robot::showRobot()
+{
+    print(x, y, 'R');
+}
+void Robot::showChargingSpot()
+{
+    print(chargingX, chargingY, 'C');
 }
 // extra end
 
-SweeperRobot::SweeperRobot(): Robot() // part 8.1
+SweeperRobot::SweeperRobot() // part 8.1
 {
     capacity = 0;
     maxCapacity = 100;
 }
-SweeperRobot::SweeperRobot(int a, int b, int ca, int cb, int n) // part 8.2
+SweeperRobot::SweeperRobot(int a, int b, int ca, int cb, int n): Robot(a, b) // part 8.2
 {
     capacity = 0;
     maxCapacity = n;
 
-    SetLocation(a, b);
     SetChargingLocation(ca, cb);
 }
 
@@ -244,7 +466,7 @@ void SweeperRobot::Status()
     Robot::Status();
 
     std::cout<< "Capacity = ";
-    printf("%.1f%%\n", getCapacity());
+    printf("%5.1f%%\n", getCapacity());
 }
 // part 8.3 end
 
@@ -253,8 +475,44 @@ float SweeperRobot::getCapacity()
 {
     return (1 - static_cast<float>(capacity) / maxCapacity) * 100;
 }
-bool SweeperRobot::move()
+void SweeperRobot::cleanCapacity() // part 10-4-a
 {
+    if(capacity > 0)
+    {
+        capacity -= 10;
 
+        if(capacity < 0) capacity = 0;
+    }
+    else type = IDLE;
+}
+void SweeperRobot::move(LinkedList* trash)
+{
+    if(!moving())
+    {
+        if(isOnChargingSpot())
+        {
+            switch(type)
+            {
+                case RUN_OUT_POWER:
+
+                    break;
+
+                case RUN_OUT_CAPACITY:
+                    break;
+
+                default: break;
+            }
+        }
+        else return;
+    }
+
+    // part 9
+    if(!toChargingSpot) SetPower(getPowerValue() - 5);
+
+    if(trash->cleanTrash(getCurrLocation().first, getCurrLocation().second)) capacity += 5;
+
+    if(getPower() < 10) gotoChargingSpot(RUN_OUT_POWER);
+    else if(getCapacity() < 5) gotoChargingSpot(RUN_OUT_CAPACITY);
+    // part 9 end
 }
 // extra end
