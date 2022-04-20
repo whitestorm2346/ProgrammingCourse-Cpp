@@ -158,8 +158,15 @@ int main()
     delete robot1;
     delete robot2;
 */
+    srand(time(NULL));
 
-    SweeperRobot* robot = new SweeperRobot(0, 14, 0, 14, 100); // part 10-3
+    // part 10-3
+    SweeperRobot* robot = new SweeperRobot(0, 14, 0, 14, 100);
+
+    robot->SetPower(150);
+    robot->SetMaxPower(150);
+    // part 10-3 end
+
     LinkedList* trash = new LinkedList();
     clock_t check = clock();
 
@@ -173,16 +180,19 @@ int main()
             check = clock();
         }
 
+        robot->move(trash);
         trash->show();
         // part 10-2 end
 
         robot->showChargingSpot();
         robot->showRobot();
 
+        // part 10-5
         gotoxy(0, 16);
         robot->Status();
+        // part 10-5 end
 
-        Sleep(50);
+        Sleep(20);
     }
 
     delete robot;
@@ -204,7 +214,7 @@ void hideCursor()
 }
 void gotoxy(int x, int y)
 {
-    COORD pos = {x, y};
+    COORD pos = {static_cast<short>(x), static_cast<short>(y)};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
@@ -385,7 +395,11 @@ void Robot::charge() // part 10-4-b
 
         if(power > maxPower) power = maxPower;
     }
-    else type = IDLE;
+    else
+    {
+        type = IDLE;
+        toChargingSpot = false;
+    }
 }
 int Robot::getPowerValue()
 {
@@ -483,7 +497,11 @@ void SweeperRobot::cleanCapacity() // part 10-4-a
 
         if(capacity < 0) capacity = 0;
     }
-    else type = IDLE;
+    else
+    {
+        type = IDLE;
+        toChargingSpot = false;
+    }
 }
 void SweeperRobot::move(LinkedList* trash)
 {
@@ -494,22 +512,28 @@ void SweeperRobot::move(LinkedList* trash)
             switch(type)
             {
                 case RUN_OUT_POWER:
-
+                    charge();
                     break;
 
                 case RUN_OUT_CAPACITY:
+                    cleanCapacity();
                     break;
 
-                default: break;
+                case IDLE:
+                    if(trash->front != nullptr) SetTargetLocation(trash->front->x, trash->front->y);
             }
         }
+        else if(trash->front != nullptr) SetTargetLocation(trash->front->x, trash->front->y);
         else return;
     }
 
     // part 9
-    if(!toChargingSpot) SetPower(getPowerValue() - 5);
+    if(!toChargingSpot)
+    {
+        SetPower(getPowerValue() - 5);
 
-    if(trash->cleanTrash(getCurrLocation().first, getCurrLocation().second)) capacity += 5;
+        if(trash->cleanTrash(getCurrLocation().first, getCurrLocation().second)) capacity += 5;
+    }
 
     if(getPower() < 10) gotoChargingSpot(RUN_OUT_POWER);
     else if(getCapacity() < 5) gotoChargingSpot(RUN_OUT_CAPACITY);
