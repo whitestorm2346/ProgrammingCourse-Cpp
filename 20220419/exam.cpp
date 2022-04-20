@@ -4,7 +4,7 @@
 #include <windows.h>
 
 // part 10-1
-#define WIDTH 40
+#define WIDTH 80
 #define HEIGHT 15
 
 // extra
@@ -43,7 +43,6 @@ public:
     // part 10-2
     void show();
     void add(SweeperRobot* robot, Node* newNode);
-    void Status();
     // part 10-2 end
 
     bool cleanTrash(int x, int y);
@@ -201,7 +200,6 @@ int main()
         // part 10-5
         gotoxy(0, 16);
         robot->Status();
-        trash->Status();
         // part 10-5 end
 
         Sleep(50);
@@ -261,11 +259,6 @@ void LinkedList::show()
     {
         print(curr->x, curr->y, '@');
     }
-}
-void LinkedList::Status()
-{
-    if(front == nullptr) std::cout<< "front NULL\n";
-    else std::cout<< "front (" << front->x << ", " << front->y << ")\n";
 }
 void LinkedList::add(SweeperRobot* robot, Node* newNode)
 {
@@ -414,11 +407,10 @@ void Robot::SetTargetLocation(int targetX, int targetY)
 }
 void Robot::Status()
 {
-    std::cout<< "Location = (" << x << ", " << y << ")\n";
-    std::cout<< "Charging Location = (" << chargingX << ", " << chargingY << ")\n";
-    std::cout<< "Power = ";
-    printf("%5.1f%%\n", getPower());
-    std::cout<< "Target Location = (" << targetX << ", " << targetY << ")\n";
+    printf("Location = (%2d, %2d)\n", x, y);
+    printf("Charging Location = (%2d, %2d)\n", chargingX, chargingY);
+    printf("Power = %5.1f%%\n", getPower());
+    printf("Target Location = (%2d, %2d)\n", targetX, targetY);
 }
 // part 2.3 end
 
@@ -529,8 +521,7 @@ void SweeperRobot::Status()
 {
     Robot::Status();
 
-    std::cout<< "Capacity = ";
-    printf("%5.1f%%\n", getCapacity());
+    printf("Capacity = %5.1f%%\n", getCapacity());
 }
 // part 8.3 end
 
