@@ -13,8 +13,6 @@
 #define RUN_OUT_POWER 1
 #define RUN_OUT_CAPACITY 2
 
-#define iabs(n) ((n < 0) ? (-n) : n)
-
 class Node;
 class LinkedList;
 class Robot;
@@ -43,6 +41,7 @@ public:
 
     // part 10-2
     void show();
+    void show(SweeperRobot* robot);
     void add(SweeperRobot* robot, Node* newNode);
     // part 10-2 end
 
@@ -214,8 +213,8 @@ int main()
 
 int countDistance(SweeperRobot* robot, Node* trash)
 {
-    return iabs(robot->getChargingSpotLocation().first - trash->x) +
-           iabs(robot->getChargingSpotLocation().second - trash->y);
+    return static_cast<int>(abs(robot->getChargingSpotLocation().first - trash->x)) +
+           static_cast<int>(abs(robot->getChargingSpotLocation().second - trash->y));
 }
 void print(int x, int y, std::string str)
 {
@@ -261,6 +260,15 @@ void LinkedList::show()
         print(curr->x, curr->y, "¡·");
     }
 }
+void LinkedList::show(SweeperRobot* robot)
+{
+    for(Node* curr = front; curr != nullptr; curr = curr->next)
+    {
+        hideCursor();
+        gotoxy(curr->x, curr->y);
+        printf("%02d", countDistance(robot, curr));
+    }
+}
 void LinkedList::add(SweeperRobot* robot, Node* newNode)
 {
     if(front == nullptr)
@@ -270,13 +278,13 @@ void LinkedList::add(SweeperRobot* robot, Node* newNode)
     }
     else
     {
-        if(countDistance(robot, newNode) >= countDistance(robot, front))
+        if(countDistance(robot, newNode) < countDistance(robot, front))
         {
             front->prev = newNode;
             newNode->next = front;
             front = newNode;
         }
-        else if(countDistance(robot, newNode) < countDistance(robot, back))
+        else if(countDistance(robot, newNode) >= countDistance(robot, back))
         {
             back->next = newNode;
             newNode->prev = back;
@@ -286,8 +294,8 @@ void LinkedList::add(SweeperRobot* robot, Node* newNode)
         {
             for(Node* curr = front; curr != back; curr = curr->next)
             {
-                if(countDistance(robot, newNode) < countDistance(robot, curr) &&
-                   countDistance(robot, newNode) >= countDistance(robot, curr->next))
+                if(countDistance(robot, newNode) >= countDistance(robot, curr) &&
+                   countDistance(robot, newNode) < countDistance(robot, curr->next))
                 {
                     curr->next->prev = newNode;
                     newNode->next = curr->next;
@@ -575,7 +583,12 @@ void SweeperRobot::move(LinkedList* trash)
     {
         SetPower(getPowerValue() - 5);
 
-        if(trash->cleanTrash(getCurrLocation().first, getCurrLocation().second)) capacity += 5;
+        if(trash->cleanTrash(getCurrLocation().first, getCurrLocation().second))
+        {
+            capacity += 5;
+
+            if(trash->front != nullptr) SetTargetLocation(trash->front->x, trash->front->y);
+        }
     }
 
     if(getPower() < 10) gotoChargingSpot(RUN_OUT_POWER);
