@@ -12,8 +12,6 @@
 #define RUN_OUT_POWER 1
 #define RUN_OUT_CAPACITY 2
 
-#define iabs(n) ((n < 0) ? (-n) : n)
-
 class Node;
 class LinkedList;
 class Robot;
@@ -194,8 +192,8 @@ int main()
         trash->show();
         // part 10-2 end
 
-        robot->showChargingSpot();
         robot->showRobot();
+        robot->showChargingSpot();
 
         // part 10-5
         gotoxy(0, 16);
@@ -213,8 +211,8 @@ int main()
 
 int countDistance(SweeperRobot* robot, Node* trash)
 {
-    return iabs(robot->getChargingSpotLocation().first - trash->x) +
-           iabs(robot->getChargingSpotLocation().second - trash->y);
+    return static_cast<int>(abs(robot->getChargingSpotLocation().first - trash->x)) +
+           static_cast<int>(abs(robot->getChargingSpotLocation().second - trash->y));
 }
 void print(int x, int y, char chr)
 {
@@ -269,13 +267,13 @@ void LinkedList::add(SweeperRobot* robot, Node* newNode)
     }
     else
     {
-        if(countDistance(robot, newNode) >= countDistance(robot, front))
+        if(countDistance(robot, newNode) < countDistance(robot, front))
         {
             front->prev = newNode;
             newNode->next = front;
             front = newNode;
         }
-        else if(countDistance(robot, newNode) < countDistance(robot, back))
+        else if(countDistance(robot, newNode) >= countDistance(robot, back))
         {
             back->next = newNode;
             newNode->prev = back;
@@ -285,8 +283,8 @@ void LinkedList::add(SweeperRobot* robot, Node* newNode)
         {
             for(Node* curr = front; curr != back; curr = curr->next)
             {
-                if(countDistance(robot, newNode) < countDistance(robot, curr) &&
-                   countDistance(robot, newNode) >= countDistance(robot, curr->next))
+                if(countDistance(robot, newNode) >= countDistance(robot, curr) &&
+                   countDistance(robot, newNode) < countDistance(robot, curr->next))
                 {
                     curr->next->prev = newNode;
                     newNode->next = curr->next;
